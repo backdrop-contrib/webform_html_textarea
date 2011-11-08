@@ -1,0 +1,5 @@
+name = Webform HTML textarea
+description = Allows users to submit webform textarea's with HTML in them. Supports the <a href="drupal.org/project/wysiwyg">WYSIWYG Module</a>.
+core = 6.x
+package = Webform
+php = 5.1
