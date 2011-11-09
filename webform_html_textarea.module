@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_webform_component_info
+ * Implementation of hook_webform_component_info().
  */
 function webform_html_textarea_webform_component_info() {
   return array(
@@ -74,7 +74,7 @@ function _webform_edit_html_textarea($component) {
     '#parents' => array('value')
   );
   $form['value']['format'] = filter_form();
-  foreach(element_children($form['value']['format']) as $child) {
+  foreach (element_children($form['value']['format']) as $child) {
     $form['value']['format'][$child]['#parents'] = array('extra', 'format');
   }
 
@@ -183,7 +183,7 @@ function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE
       }
     }
   }
-  else if (!$component['extra']['show_tips']){
+  elseif (!$component['extra']['show_tips']) {
     //hide tips
     unset($element[$key]['format'][2]);
     $element[$key]['format']['format']['guidelines']['#value'] = '';
@@ -220,10 +220,8 @@ function _webform_submit_html_textarea($component, $value) {
  * Format the output of data for this component.
  */
 function theme_webform_display_html_textarea($element) {
-  $output = $element['#format'] == 'html' ? str_replace("\n", '<br />', check_markup($element['#value'], $element['#webform_component']['extra']['format'])) : $element['#value'];
-  if (strlen($output) > 80) {
-    $output = ($element['#format'] == 'html') ? '<div class="webform-long-answer">' . $output . '</div>' : $output;
-  }
+  $output = $element['#format'] == 'html' ? check_markup($element['#value'], $element['#webform_component']['extra']['format']) : $element['#value'];
+  $output = ($element['#format'] == 'html') ? '<div class="webform-html-textarea">' . $output . '</div>' : $output;
   return $output !== '' ? $output : ' ';
 }
 
