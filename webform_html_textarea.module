@@ -74,6 +74,7 @@ function _webform_edit_html_textarea($component) {
     '#parents' => array('value')
   );
   $form['value']['format'] = filter_form();
+  $form['value']['format']['#collapsed'] = FALSE;
   foreach (element_children($form['value']['format']) as $child) {
     $form['value']['format'][$child]['#parents'] = array('extra', 'format');
   }
@@ -130,7 +131,11 @@ function _webform_edit_html_textarea($component) {
 function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE) {
 
   $key = (isset($component['form_key'])) ? $component['form_key'] : $component['name'];
-  $element[$key][$key] = array(
+  $element = array(
+    '#weight' => $component['weight'],
+    '#webform_component' => $component,
+  );
+  $element[$key] = array(
     '#type' => 'textarea',
     '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
     '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : 'before',
@@ -145,49 +150,49 @@ function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE
     '#theme_wrappers' => array('webform_element_wrapper'),
     '#pre_render' => array('webform_element_title_display'),
     '#post_render' => array('webform_element_wrapper'),
-    '#webform_component' => $component,
   );
 
   if ($component['extra']['disabled']) {
-    $element[$key][$key]['#attributes']['readonly'] = 'readonly';
+    $element[$key]['#attributes']['readonly'] = 'readonly';
   }
 
   if (isset($value)) {
-    $element[$key][$key]['#default_value'] = $value[0];
+    $element[$key]['#default_value'] = $value[0];
   }
-  $element[$key]['format'] = filter_form($component['extra']['format']);
-  $children = element_children($element[$key]['format']);
-  if (!isset($element[$key]['format']['format'])) {
-    foreach ($children as $child) {
-      if ($child == $component['extra']['format']) {
-        unset($element[$key]['format'][$child]);
-      }
-      else {
-        $element[$key]['format'] = array(
-          $component['extra']['format'] => array(
-            '#type' => 'value',
-            '#value' => $component['extra']['format'],
-            '#parents' => array('format'),
-          ),
-        );
-        $guidelines = "";
-        if ($component['extra']['show_tips']) {
-          $extra = $extra = theme('filter_tips_more_info');
-          $tips = _filter_tips($component['extra']['format'], FALSE);
-          $guidelines = theme('filter_tips', $tips, FALSE, $extra);
-        }
-        $element[$key]['format']['format']['guidelines'] = array(
-          '#title' => t('Formatting guidelines'),
-          '#value' => $guidelines,
-        );
-      }
-    }
+
+  // Format form for wysiwyg
+  $formatform[$component['extra']['format']] = array(
+    '#type' => 'value',
+    '#value' => $component['extra']['format'],
+    '#parents' => array($key . '_format'),
+  );
+
+  if ($component['extra']['show_tips']) {
+    // add fieldset
+    $formatform += array(
+      '#type' => 'fieldset',
+      '#title' => t('Formatting guidelines'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#weight' => $element[$key]['#weight'] + 1,
+      '#element_validate' => array('filter_form_validate'),
+    );
+    $tips = _filter_tips($component['extra']['format'], FALSE);
+    $formatform['format']['guidelines'] = array(
+      '#title' => t('Formatting guidelines'),
+      '#value' => theme('filter_tips', $tips, FALSE),
+    );
   }
-  elseif (!$component['extra']['show_tips']) {
-    //hide tips
-    unset($element[$key]['format'][2]);
-    $element[$key]['format']['format']['guidelines']['#value'] = '';
+  else {
+    $formatform['format']['guidelines'] = array(
+      '#title' => t('Formatting guidelines'),
+      '#value' => '',
+    );
   }
+
+  $formatform[] = array('#value' => '');
+
+  $element['format'] = $formatform;
   return $element;
 }
 
