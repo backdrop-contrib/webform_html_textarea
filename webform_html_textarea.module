@@ -217,7 +217,7 @@ function _webform_display_html_textarea($component, $value, $format = 'html') {
  */
 function _webform_submit_html_textarea($component, $value) {
   $key = (isset($component['form_key'])) ? $component['form_key'] : $component['name'];
-  $val = isset($value[$key][$key]) ? $value[$key][$key] : '';
+  $val = isset($value[$key]) ? $value[$key] : '';
   return array($val);
 }
 
