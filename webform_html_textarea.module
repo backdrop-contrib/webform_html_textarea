@@ -73,7 +73,7 @@ function _webform_edit_html_textarea($component) {
     '#weight' => 0,
     '#parents' => array('value')
   );
-  $form['value']['format'] = filter_form();
+  $form['value']['format'] = filter_form($component['extra']['format']);
   $form['value']['format']['#collapsed'] = FALSE;
   foreach (element_children($form['value']['format']) as $child) {
     $form['value']['format'][$child]['#parents'] = array('extra', 'format');
