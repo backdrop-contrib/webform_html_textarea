@@ -150,7 +150,7 @@ function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE
     '#resizable' => (bool) $component['extra']['resizable'], // MUST be FALSE to disable.
     '#format' => $component['extra']['format'],
   );
-  filter_process_format($element);
+  
   if ($component['extra']['disabled']) {
     $element['#attributes']['readonly'] = 'readonly';
   }
