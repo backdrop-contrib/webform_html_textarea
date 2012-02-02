@@ -39,8 +39,9 @@ function _webform_defaults_html_textarea() {
       'disabled' => 0,
       'description' => '',
       'attributes' => array(),
-      'format' => FILTER_FORMAT_DEFAULT,
+      'format' => filter_default_format(),
       'show_tips' => 1,
+      'private' => FALSE,
     ),
   );
 }
@@ -52,7 +53,7 @@ function _webform_defaults_html_textarea() {
 function _webform_theme_html_textarea() {
   return array(
     'webform_display_html_textarea' => array(
-      'arguments' => array('element' => NULL),
+      'render element' => 'element',
     ),
   );
 }
@@ -63,21 +64,17 @@ function _webform_theme_html_textarea() {
 function _webform_edit_html_textarea($component) {
   $form = array();
   $form['#tree'] = TRUE;
-  $form['value']['value'] = array(
-    '#type' => 'textarea',
+  $form['value'] = array(
+    '#type' => 'text_format',
+    '#base_type' => 'textarea',
     '#title' => t('Default value'),
     '#default_value' => $component['value'],
     '#description' => t('The default value of the field.') . theme('webform_token_help'),
     '#cols' => 60,
     '#rows' => 5,
     '#weight' => 0,
-    '#parents' => array('value')
+    '#format' => $component['extra']['format'],
   );
-  $form['value']['format'] = filter_form($component['extra']['format']);
-  $form['value']['format']['#collapsed'] = FALSE;
-  foreach (element_children($form['value']['format']) as $child) {
-    $form['value']['format'][$child]['#parents'] = array('extra', 'format');
-  }
 
   $form['display']['cols'] = array(
     '#type' => 'textfield',
@@ -125,18 +122,22 @@ function _webform_edit_html_textarea($component) {
   return $form;
 }
 
+function webform_html_textarea_webform_component_presave(&$component) {
+  if ($component['type'] == 'html_textarea') {
+    $component['extra']['format'] = $component['value']['format'];
+    $component['value'] = $component['value']['value'];
+  }
+}
+
 /**
  * Implementation of _webform_render_component().
  */
 function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE) {
-
-  $key = (isset($component['form_key'])) ? $component['form_key'] : $component['name'];
   $element = array(
     '#weight' => $component['weight'],
     '#webform_component' => $component,
-  );
-  $element[$key] = array(
-    '#type' => 'textarea',
+    '#type' => 'text_format',
+    '#base_type' => 'textarea',
     '#title' => $filter ? _webform_filter_xss($component['name']) : $component['name'],
     '#title_display' => $component['extra']['title_display'] ? $component['extra']['title_display'] : 'before',
     '#default_value' => $filter ? _webform_filter_values($component['value']) : $component['value'],
@@ -147,52 +148,16 @@ function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE
     '#cols' => !empty($component['extra']['cols']) ? $component['extra']['cols'] : 60,
     '#attributes' => $component['extra']['attributes'],
     '#resizable' => (bool) $component['extra']['resizable'], // MUST be FALSE to disable.
-    '#theme_wrappers' => array('webform_element_wrapper'),
-    '#pre_render' => array('webform_element_title_display'),
-    '#post_render' => array('webform_element_wrapper'),
+    '#format' => $component['extra']['format'],
   );
-
+  filter_process_format($element);
   if ($component['extra']['disabled']) {
-    $element[$key]['#attributes']['readonly'] = 'readonly';
+    $element['#attributes']['readonly'] = 'readonly';
   }
 
   if (isset($value)) {
-    $element[$key]['#default_value'] = $value[0];
+    $element['#default_value'] = $value[0];
   }
-
-  // Format form for wysiwyg
-  $formatform[$component['extra']['format']] = array(
-    '#type' => 'value',
-    '#value' => $component['extra']['format'],
-    '#parents' => array($key . '_format'),
-  );
-
-  if ($component['extra']['show_tips']) {
-    // add fieldset
-    $formatform += array(
-      '#type' => 'fieldset',
-      '#title' => t('Formatting guidelines'),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
-      '#weight' => $element[$key]['#weight'] + 1,
-      '#element_validate' => array('filter_form_validate'),
-    );
-    $tips = _filter_tips($component['extra']['format'], FALSE);
-    $formatform['format']['guidelines'] = array(
-      '#title' => t('Formatting guidelines'),
-      '#value' => theme('filter_tips', $tips, FALSE),
-    );
-  }
-  else {
-    $formatform['format']['guidelines'] = array(
-      '#title' => t('Formatting guidelines'),
-      '#value' => '',
-    );
-  }
-
-  $formatform[] = array('#value' => '');
-
-  $element['format'] = $formatform;
   return $element;
 }
 
@@ -204,8 +169,7 @@ function _webform_display_html_textarea($component, $value, $format = 'html') {
     '#title' => $component['name'],
     '#weight' => $component['weight'],
     '#theme' => 'webform_display_html_textarea',
-    '#theme_wrappers' => $format == 'html' ? array('webform_element', 'webform_element_wrapper') : array('webform_element_text'),
-    '#post_render' => array('webform_element_wrapper'),
+    '#theme_wrappers' => $format == 'html' ? array('webform_element') : array('webform_element_text'),
     '#format' => $format,
     '#value' => isset($value[0]) ? $value[0] : '',
     '#webform_component' => $component,
@@ -224,7 +188,8 @@ function _webform_submit_html_textarea($component, $value) {
 /**
  * Format the output of data for this component.
  */
-function theme_webform_display_html_textarea($element) {
+function theme_webform_display_html_textarea($variables) {
+  $element = $variables['element'];
   $output = $element['#format'] == 'html' ? check_markup($element['#value'], $element['#webform_component']['extra']['format']) : $element['#value'];
   $output = ($element['#format'] == 'html') ? '<div class="webform-html-textarea">' . $output . '</div>' : $output;
   return $output !== '' ? $output : ' ';
