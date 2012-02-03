@@ -149,14 +149,31 @@ function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE
     '#attributes' => $component['extra']['attributes'],
     '#resizable' => (bool) $component['extra']['resizable'], // MUST be FALSE to disable.
     '#format' => $component['extra']['format'],
+    '#after_build' => array('_webform_html_textarea_after_build'),
   );
-  
+
   if ($component['extra']['disabled']) {
     $element['#attributes']['readonly'] = 'readonly';
   }
 
   if (isset($value)) {
     $element['#default_value'] = $value[0];
+  }
+
+
+  return $element;
+}
+
+function _webform_html_textarea_after_build($element) {
+  //wysiwyg needs the select box to function
+  //we will hide the select box and remove all
+  //filter formats except the one selected for
+  //this component
+  if ($element['#type'] == 'text_format') {
+    $format = $element['#webform_component']['extra']['format'];
+    $element['format']['format']['#options'] = array($format => $element['format']['format']['#options'][$format]);
+    $element['format']['format']['#attributes']['disabled'] = 'disabled';
+    $element['format']['format']['#description'] = t('This text format will be used to filter your html. You can not change this.');
   }
   return $element;
 }
@@ -180,8 +197,7 @@ function _webform_display_html_textarea($component, $value, $format = 'html') {
  * Implementation of _webform_submit_component().
  */
 function _webform_submit_html_textarea($component, $value) {
-  $key = (isset($component['form_key'])) ? $component['form_key'] : $component['name'];
-  $val = isset($value[$key]) ? $value[$key] : '';
+  $val = isset($value['value']) ? $value['value'] : '';
   return array($val);
 }
 
@@ -199,21 +215,26 @@ function theme_webform_display_html_textarea($variables) {
  * Implementation of _webform_analysis_component().
  */
 function _webform_analysis_html_textarea($component, $sids = array()) {
-  $placeholders = count($sids) ? array_fill(0, count($sids), "'%s'") : array();
-  $sidfilter = count($sids) ? " AND sid in (" . implode(",", $placeholders) . ")" : "";
-  $query = 'SELECT data ' .
-    ' FROM {webform_submitted_data} ' .
-    ' WHERE nid = %d ' .
-    ' AND cid = %d ' . $sidfilter;
+$query = db_select('webform_submitted_data', 'wsd', array('fetch' => PDO::FETCH_ASSOC))
+    ->fields('wsd', array('no', 'data'))
+    ->condition('nid', $component['nid'])
+    ->condition('cid', $component['cid']);
+
+  if (count($sids)) {
+    $query->condition('sid', $sids, 'IN');
+  }
+
   $nonblanks = 0;
   $submissions = 0;
   $wordcount = 0;
+  $stripped_wordcount = 0;
 
-  $result = db_query($query, array_merge(array($component['nid'], $component['cid']), $sids));
-  while ($data = db_fetch_array($result)) {
+  $result = $query->execute();
+  foreach ($result as $data) {
     if (drupal_strlen(trim($data['data'])) > 0) {
       $nonblanks++;
       $wordcount += str_word_count(trim($data['data']));
+      $stripped_wordcount += str_word_count(strip_tags($data['data']));
     }
     $submissions++;
   }
@@ -221,6 +242,7 @@ function _webform_analysis_html_textarea($component, $sids = array()) {
   $rows[0] = array(t('Left Blank'), ($submissions - $nonblanks));
   $rows[1] = array(t('User entered value'), $nonblanks);
   $rows[2] = array(t('Average submission length in words (ex blanks)'), ($nonblanks != 0 ? number_format($wordcount/$nonblanks, 2) : '0'));
+  $rows[3] = array(t('Average submission length in words (ex blanks, without HTML tags)'), ($nonblanks != 0 ? number_format($stripped_wordcount/$nonblanks, 2) : '0'));
   return $rows;
 }
 
