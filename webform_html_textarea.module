@@ -41,6 +41,7 @@ function _webform_defaults_html_textarea() {
       'attributes' => array(),
       'format' => filter_default_format(),
       'show_tips' => 1,
+      'show_link' => 1,
       'private' => FALSE,
     ),
   );
@@ -119,6 +120,14 @@ function _webform_edit_html_textarea($component) {
     '#default_value' => $component['extra']['show_tips'],
     '#parents' => array('extra', 'show_tips'),
   );
+  $form['display']['show_link'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show "More information about text formats" link'),
+    '#description' => t('Show the "More information about text formats" link to the user.'),
+    '#weight' => 11,
+    '#default_value' => $component['extra']['show_link'],
+    '#parents' => array('extra', 'show_link'),
+  );
   return $form;
 }
 
@@ -176,6 +185,9 @@ function _webform_html_textarea_after_build($element) {
     $element['format']['format']['#description'] = t('This text format will be used to filter your html. You can not change this.');
     if (!$element['#webform_component']['extra']['show_tips']) {
       unset($element['format']['guidelines']);
+    }
+    if (!$element['#webform_component']['extra']['show_link']) {
+      unset($element['format']['help']);
     }
   }
   return $element;
