@@ -174,6 +174,9 @@ function _webform_html_textarea_after_build($element) {
     $element['format']['format']['#options'] = array($format => $element['format']['format']['#options'][$format]);
     $element['format']['format']['#attributes']['disabled'] = 'disabled';
     $element['format']['format']['#description'] = t('This text format will be used to filter your html. You can not change this.');
+    if (!$element['#webform_component']['extra']['show_tips']) {
+      unset($element['format']['guidelines']);
+    }
   }
   return $element;
 }
