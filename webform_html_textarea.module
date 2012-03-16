@@ -69,7 +69,7 @@ function _webform_edit_html_textarea($component) {
     '#type' => 'text_format',
     '#base_type' => 'textarea',
     '#title' => t('Default value'),
-    '#default_value' => $component['value'],
+    '#default_value' => check_markup($component['value'], $component['extra']['format']),
     '#description' => t('The default value of the field.') . theme('webform_token_help'),
     '#cols' => 60,
     '#rows' => 5,
@@ -134,7 +134,7 @@ function _webform_edit_html_textarea($component) {
 function webform_html_textarea_webform_component_presave(&$component) {
   if ($component['type'] == 'html_textarea') {
     $component['extra']['format'] = $component['value']['format'];
-    $component['value'] = $component['value']['value'];
+    $component['value'] = check_markup($component['value']['value'], $component['extra']['format']);
   }
 }
 
@@ -166,7 +166,7 @@ function _webform_render_html_textarea($component, $value = NULL, $filter = TRUE
   }
 
   if (isset($value)) {
-    $element['#default_value'] = $value[0];
+    $element['#default_value'] = check_markup($value[0], $component['extra']['format']);
   }
 
 
@@ -203,7 +203,7 @@ function _webform_display_html_textarea($component, $value, $format = 'html') {
     '#theme' => 'webform_display_html_textarea',
     '#theme_wrappers' => $format == 'html' ? array('webform_element') : array('webform_element_text'),
     '#format' => $format,
-    '#value' => isset($value[0]) ? $value[0] : '',
+    '#value' => isset($value[0]) ? check_markup($value[0], $component['extra']['format']) : '',
     '#webform_component' => $component,
   );
 }
@@ -212,7 +212,7 @@ function _webform_display_html_textarea($component, $value, $format = 'html') {
  * Implementation of _webform_submit_component().
  */
 function _webform_submit_html_textarea($component, $value) {
-  $val = isset($value['value']) ? $value['value'] : '';
+  $val = isset($value['value']) ? check_markup($value['value'], $component['extra']['format']) : '';
   return array($val);
 }
 
@@ -221,7 +221,7 @@ function _webform_submit_html_textarea($component, $value) {
  */
 function theme_webform_display_html_textarea($variables) {
   $element = $variables['element'];
-  $output = $element['#format'] == 'html' ? check_markup($element['#value'], $element['#webform_component']['extra']['format']) : $element['#value'];
+  $output = check_markup($element['#value'], $element['#webform_component']['extra']['format']);
   $output = ($element['#format'] == 'html') ? '<div class="webform-html-textarea">' . $output . '</div>' : $output;
   return $output !== '' ? $output : ' ';
 }
@@ -283,6 +283,6 @@ function _webform_csv_headers_html_textarea($component, $export_options) {
  * Implementation of _webform_csv_data_component().
  */
 function _webform_csv_data_html_textarea($component, $export_options, $value) {
-  return empty($value[0]) ? '' : $value[0];
+  return empty($value[0]) ? '' : check_markup($value[0], $component['extra']['format']);
 }
 
