@@ -133,8 +133,15 @@ function _webform_edit_html_textarea($component) {
 
 function webform_html_textarea_webform_component_presave(&$component) {
   if ($component['type'] == 'html_textarea') {
-    $component['extra']['format'] = $component['value']['format'];
-    $component['value'] = check_markup($component['value']['value'], $component['extra']['format']);
+    if (isset($component['value']['format'])) {
+      $component['extra']['format'] = $component['value']['format'];
+    }
+    // if $component['value']['format'] wasn't set in the previous step,
+    // there still could be a default value for the format. So we use that format
+    // just to be safe.
+    if (isset($component['extra']['format'])) {
+      $component['value'] = check_markup($component['value']['value'], $component['extra']['format']);
+    }
   }
 }
 
