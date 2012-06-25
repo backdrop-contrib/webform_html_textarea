@@ -131,17 +131,22 @@ function _webform_edit_html_textarea($component) {
   return $form;
 }
 
+/**
+ * Implements hook_webform_component_presave().
+ */
 function webform_html_textarea_webform_component_presave(&$component) {
   if ($component['type'] == 'html_textarea') {
-    if (isset($component['value']['format'])) {
+    // Components saved via UI will have value in an array keyed by value and format
+    if (isset($component['value']) && is_array($component['value'])) {
       $component['extra']['format'] = $component['value']['format'];
+      $value = $component['value']['value'];
     }
-    // if $component['value']['format'] wasn't set in the previous step,
-    // there still could be a default value for the format. So we use that format
-    // just to be safe.
-    if (isset($component['extra']['format'])) {
-      $component['value'] = check_markup($component['value']['value'], $component['extra']['format']);
+    // Components saved via other methods may have value as a string
+    else {
+      $value = isset($component['value']) ? $component['value'] : '';
     }
+    $format = isset($component['extra']['format']) ? $component['extra']['format'] : filter_default_format();
+    $component['value'] = check_markup($value, $format);
   }
 }
 
