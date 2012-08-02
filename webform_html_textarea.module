@@ -40,6 +40,7 @@ function _webform_defaults_html_textarea() {
       'description' => '',
       'attributes' => array(),
       'format' => filter_default_format(),
+      'show_format_fieldset' => 1,
       'show_tips' => 1,
       'show_link' => 1,
       'private' => FALSE,
@@ -112,6 +113,14 @@ function _webform_edit_html_textarea($component) {
     '#default_value' => $component['extra']['disabled'],
     '#parents' => array('extra', 'disabled'),
   );
+  $form['display']['show_format_fieldset'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show format selection'),
+    '#description' => t('Show format selection to the user. @notice', array('@notice' => t('Note: The user won\'t be able to change the selected format, he\'ll just be able to see it.'))),
+    '#weight' => 10,
+    '#default_value' => $component['extra']['show_format_fieldset'],
+    '#parents' => array('extra', 'show_format_fieldset'),
+  );
   $form['display']['show_tips'] = array(
     '#type' => 'checkbox',
     '#title' => t('Show filter tips'),
@@ -119,6 +128,11 @@ function _webform_edit_html_textarea($component) {
     '#weight' => 11,
     '#default_value' => $component['extra']['show_tips'],
     '#parents' => array('extra', 'show_tips'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="extra[show_format_fieldset]"]' => array('checked' => TRUE),
+      ),
+    ),
   );
   $form['display']['show_link'] = array(
     '#type' => 'checkbox',
@@ -127,6 +141,11 @@ function _webform_edit_html_textarea($component) {
     '#weight' => 11,
     '#default_value' => $component['extra']['show_link'],
     '#parents' => array('extra', 'show_link'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="extra[show_format_fieldset]"]' => array('checked' => TRUE),
+      ),
+    ),
   );
   return $form;
 }
@@ -197,6 +216,9 @@ function _webform_html_textarea_after_build($element) {
     }
     $element['format']['format']['#options'] = array($format => $element['format']['format']['#options'][$format]);
     $element['format']['format']['#attributes']['disabled'] = 'disabled';
+    if (!$element['#webform_component']['extra']['show_format_fieldset']) {
+      $element['format']['#attributes']['style'] = 'display:none;';
+    }
     $element['format']['format']['#description'] = t('This text format will be used to filter your html. You can not change this.');
     if (!$element['#webform_component']['extra']['show_tips']) {
       unset($element['format']['guidelines']);
