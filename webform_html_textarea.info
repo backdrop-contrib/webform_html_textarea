@@ -1,7 +1,6 @@
+type = module
 name = Webform HTML Textarea
-description = Allows users to submit Webform textarea's with HTML in them. Supports the <a href="drupal.org/project/wysiwyg">WYSIWYG Module</a>.
-core = 7.x
+description = Allows users to submit Webform textareas with HTML in them.
+backdrop = 1.x
 package = Webform
-php = 5.1
-
 dependencies[] = webform
